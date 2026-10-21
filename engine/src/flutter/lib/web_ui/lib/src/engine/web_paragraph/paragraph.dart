@@ -756,6 +756,7 @@ class TextSpan extends ParagraphSpan {
   final ui.TextDirection? textDirection;
 
   late final DomTextMetrics _metrics = _getMetrics();
+  late final DomShapedText _shapedText = _getShapedText();
 
   @override
   late final double fontBoundingBoxAscent = _metrics.fontBoundingBoxAscent;
@@ -763,35 +764,44 @@ class TextSpan extends ParagraphSpan {
   @override
   late final double fontBoundingBoxDescent = _metrics.fontBoundingBoxDescent;
 
-  DomTextMetrics _getMetrics() {
+  void _prepareLayoutContext() {
     style.applyToContext(layoutContext);
 
     // We need to set in up because we otherwise in RTL text without textDirection
     // Canvas2D will return all clusters placed right to left starting from 0.
     // Also, we have a separate (possibly, different) textDirection for the ellipsis.
     layoutContext.direction = textDirection == ui.TextDirection.ltr ? 'ltr' : 'rtl';
+  }
+
+  DomTextMetrics _getMetrics() {
+    _prepareLayoutContext();
     return layoutContext.measureText(text);
   }
 
+  DomShapedText _getShapedText() {
+    _prepareLayoutContext();
+    return layoutContext.shapeText(text);
+  }
+
   double? advanceWidth() {
-    return _metrics.width;
+    return _shapedText.width;
   }
 
   @override
   List<TextCluster> extractClusters() {
     final clusters = <TextCluster>[];
-    for (final DomTextCluster cluster in _metrics.getTextClusters()) {
+    for (final DomGlyphRun cluster in _shapedText.glyphClusters()) {
       clusters.add(TextCluster(this, cluster));
     }
     return clusters;
   }
 
   ui.Rect getClusterBounds(TextCluster cluster) {
-    return _metrics.getBounds(cluster.startInSpan, cluster.endInSpan);
+    return _shapedText.getBounds(cluster.startInSpan, cluster.endInSpan);
   }
 
   ui.Rect getClusterSelection(TextCluster cluster) {
-    return _metrics.getSelection(cluster.startInSpan, cluster.endInSpan);
+    return _shapedText.getSelection(cluster.startInSpan, cluster.endInSpan);
   }
 
   ui.Rect getTextRangeSelectionInBlock(LineBlock block, ui.TextRange textRange) {
@@ -803,7 +813,7 @@ class TextSpan extends ParagraphSpan {
     if (intersect.isEmpty) {
       return ui.Rect.zero;
     }
-    final ui.Rect intersectSelection = _metrics.getSelection(
+    final ui.Rect intersectSelection = _shapedText.getSelection(
       intersect.start - start,
       intersect.end - start,
     );
@@ -814,7 +824,7 @@ class TextSpan extends ParagraphSpan {
     if (block.physicalTextRange.isEmpty) {
       return ui.Rect.fromLTWH(block.shiftFromLineStart, 0.0, 0.0, 0.0);
     }
-    final ui.Rect bounds = _metrics.getBounds(
+    final ui.Rect bounds = _shapedText.getBounds(
       block.physicalTextRange.start - start,
       block.physicalTextRange.end - start,
     );
@@ -834,7 +844,7 @@ class TextSpan extends ParagraphSpan {
       return ui.Rect.fromLTWH(block.shiftFromLineStart, 0.0, 0.0, 0.0);
     }
     // This `selection` is relative to the span, but blocks should be positioned relative to the line.
-    final ui.Rect selection = _metrics.getSelection(
+    final ui.Rect selection = _shapedText.getSelection(
       physicalRange.start - start,
       physicalRange.end - start,
     );

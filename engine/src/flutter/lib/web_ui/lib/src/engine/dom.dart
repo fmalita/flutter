@@ -1148,6 +1148,7 @@ extension type DomCanvasRenderingContext2D._(JSObject _) implements JSObject {
   external void putImageData(DomImageData imagedata, int dx, int dy);
   external void lineTo(num x, num y);
   external DomTextMetrics measureText(String text);
+  external DomShapedText shapeText(String text);
   external void moveTo(num x, num y);
   external void save();
   external void stroke();
@@ -1201,15 +1202,11 @@ extension type DomCanvasRenderingContext2D._(JSObject _) implements JSObject {
   external void strokeText(String text, num x, num y);
   external set globalAlpha(num? value);
 
-  @JS('fillTextCluster')
-  external void _fillTextCluster(JSAny? textCluster, double x, double y, [JSAny? options]);
+  @JS('fillGlyphRun')
+  external void _fillGlyphRun(JSAny? glyphRun, double x, double y);
 
-  void fillTextCluster(DomTextCluster textCluster, double x, double y, [Object? options]) {
-    if (options == null) {
-      return _fillTextCluster(textCluster.toJSAnyDeep, x, y);
-    } else {
-      return _fillTextCluster(textCluster.toJSAnyDeep, x, y, options.toJSAnyDeep);
-    }
+  void fillGlyphRun(DomGlyphRun glyphRun, double x, double y) {
+    return _fillGlyphRun(glyphRun.toJSAnyDeep, x, y);
   }
 }
 
@@ -1681,20 +1678,29 @@ DomText createDomText(String data) => domDocument.createTextNode(data);
 extension type DomTextMetrics._(JSObject _) implements JSObject {
   external double? get width;
 
-  @JS('getTextClusters')
-  external JSArray<JSAny?> _getTextClusters();
-  List<DomTextCluster> getTextClusters() => _getTextClusters().toDart.cast<DomTextCluster>();
-
-  external DomRectReadOnly getActualBoundingBox(int start, int end);
-
   external double get fontBoundingBoxAscent;
 
   external double get fontBoundingBoxDescent;
+}
 
-  @JS('getSelectionRects')
-  external JSArray<JSAny> _getSelectionRects(int start, int end);
-  List<DomRectReadOnly> getSelectionRects(int start, int end) =>
-      _getSelectionRects(start, end).toDart.cast<DomRectReadOnly>();
+@JS('ShapedText')
+extension type DomShapedText._(JSObject _) implements JSObject {
+  external double get width;
+
+  @JS('glyphRuns')
+  external JSArray<JSAny?> _glyphRuns();
+  List<DomGlyphRun> glyphRuns() => _glyphRuns().toDart.cast<DomGlyphRun>();
+
+  @JS('glyphClusters')
+  external JSArray<JSAny?> _glyphClusters();
+  List<DomGlyphRun> glyphClusters() => _glyphClusters().toDart.cast<DomGlyphRun>();
+
+  external DomRectReadOnly actualBoundingBox(int start, int end);
+
+  @JS('selectionRects')
+  external JSArray<JSAny> _selectionRects(int start, int end);
+  List<DomRectReadOnly> selectionRects(int start, int end) =>
+      _selectionRects(start, end).toDart.cast<DomRectReadOnly>();
 }
 
 @JS('DOMException')
@@ -2757,24 +2763,17 @@ extension JSArrayExtension on JSArray<JSAny?> {
   external int get length;
 }
 
-@JS('window.TextCluster')
-external JSAny? get _textClusterConstructor;
+@JS('window.GlyphRun')
+external JSAny? get _glyphRunConstructor;
 
-bool browserSupportsTextCluster = _textClusterConstructor != null;
+bool browserSupportsTextCluster = _glyphRunConstructor != null;
 
-@JS('TextCluster')
-extension type DomTextCluster._(JSObject _) implements JSObject {
-  @JS('begin')
-  external int? _begin;
-  @JS('start')
-  external int _start;
-  // The proposal had this `begin` then renamed it to `start`. Some versions of Chrome still have
-  // the old name.
-  //
-  // `_begin` can be removed once this feature is launched in a stable Chrome release.
-  int get start => _begin ?? _start;
-
+@JS('GlyphRun')
+extension type DomGlyphRun._(JSObject _) implements JSObject {
+  external int get start;
   external int get end;
   external double get x;
   external double get y;
+  external double get width;
+  external DomTextMetrics textMetrics();
 }

@@ -1130,11 +1130,11 @@ class TextCluster extends WebCluster {
   @override
   late final ui.Rect advance = span.getClusterSelection(this);
 
-  final DomTextCluster _cluster;
+  final DomGlyphRun _cluster;
 
   @override
   void addToContext(DomCanvasRenderingContext2D context, double x, double y) {
-    context.fillTextCluster(_cluster, /*left:*/ x, /*top:*/ y);
+    context.fillGlyphRun(_cluster, /*left:*/ x, /*top:*/ y);
   }
 
   @override
@@ -1541,9 +1541,9 @@ class TextLine {
   }
 }
 
-extension DomTextMetricsExtension on DomTextMetrics {
+extension DomShapedTextExtension on DomShapedText {
   ui.Rect getSelection(int start, int end) {
-    final List<DomRectReadOnly> rects = getSelectionRects(start, end);
+    final List<DomRectReadOnly> rects = selectionRects(start, end);
     double minLeft = rects.first.left;
     double minTop = rects.first.top;
     double maxRight = rects.first.right;
@@ -1562,7 +1562,7 @@ extension DomTextMetricsExtension on DomTextMetrics {
   }
 
   ui.Rect getBounds(int start, int end) {
-    final DomRectReadOnly box = getActualBoundingBox(start, end);
+    final DomRectReadOnly box = actualBoundingBox(start, end);
     return ui.Rect.fromLTWH(box.left, box.top, box.width, box.height);
   }
 }

@@ -52,7 +52,7 @@ const hasChromiumBreakIterators = () => {
 }
 
 const hasTextCluster = () => {
-  return (typeof window.TextCluster !== "undefined");
+  return (typeof window.GlyphRun !== "undefined");
 }
 
 const getFirefoxVersion = () => {
